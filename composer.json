@@ -1,0 +1,23 @@
+{
+  "name": "ljj7410/captcha",
+  "description": "PHP滑块旋转验证码",
+  "keywords": ["captcha","滑块验证码"],
+  "homepage": "https://github.com/ljj7410/captcha",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dean.Lee",
+      "email": "dean7410@163.com",
+      "homepage": "",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=7.2",
+    "ext-gd": "*"
+  },
+  "autoload": {
+    "psr-4": { "Util\\": "src/" }
+  },
+  "minimum-stability": "dev"
+}
