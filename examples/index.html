@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试</title>
+    <style>
+        .box {width: 322px; height:210px; box-shadow: 0 0 4px rgba(0,0,0,0.3); border:solid 2px #ddd; background: #f7f7f7; border-radius: 8px; padding: 10px;}
+        .box .imageBox {width:320px; height:150px; overflow: hidden; position: relative; border:solid 1px #fff;box-shadow: inset 0 0 3px rgba(0,0,0,0.5);}
+        #master {width: 320px; height: 150px;}
+        .box .imageBox .moveBox {position: absolute; display: none; border-radius: 50%; border: solid 2px #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5); box-sizing: border-box; overflow: hidden;}
+        #sub {width:100%;height:100%; position: absolute; top:-1px; left: -1px;}
+        .btnBox {width: 320px; height: 36px;margin-top: 12px; border-radius: 8px; background: #eee; border: solid 1px #ddd; box-shadow: inset 3px 3px 6px rgba(0,0,0,0.5); position: relative;}
+        .btnBox button {width: 36px; height: 36px; cursor: pointer; border-radius: 8px; background: #ddd; box-shadow: inset 3px 3px 5px rgba(255,255,255,0.6); position: absolute; left: 0; top:0;}
+    </style>
+</head>
+<body>
+<div class="box">
+    <div class="imageBox">
+        <img id="master">
+        <div class="moveBox"><img id="sub"></div>
+    </div>
+    <div class="btnBox">
+        <button type="button" id="moveBtn">&gt;&gt;&gt;</button>
+    </div>
+</div>
+</body>
+<script>
+    let xhr = new XMLHttpRequest();
+    let angle = 0;
+    xhr.open('GET', '/member/get_verify_code', true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function(){
+        let bin = xhr.response;
+        //先取时间戳
+        let time = (new Uint32Array(bin.slice(0,4)))[0];
+        //取得子图的坐标
+        let position = [
+            (new Uint16Array(bin.slice(4,6)))[0],
+            (new Uint16Array(bin.slice(6,8)))[0]
+        ];
+        //取得母子双图的字节大小
+        let arr = new Uint32Array(bin.slice(bin.byteLength - 8));
+        //根据字节大小读取图片内容
+        let master_blob = new Blob([bin.slice(8, arr[0] + 8)], {type:'image/jpeg'});
+        let sub_blob = new Blob([bin.slice(arr[0] + 8, arr[0] + arr[1] + 8)], {type:'image/jpeg'});
+
+        //配置显示
+        document.getElementById('master').src = URL.createObjectURL(master_blob);
+        document.getElementById('sub').src = URL.createObjectURL(sub_blob);
+        document.getElementById('sub').onload = function(){
+            document.querySelector('.moveBox').style.width = this.width / 2 + 'px';
+            document.querySelector('.moveBox').style.height = this.width / 2 + 'px';
+            document.querySelector('.moveBox').style.left = (position[0] - this.width/2) / 2 + 'px';
+            document.querySelector('.moveBox').style.top = (position[1] - this.width/2) / 2 + 'px';
+            document.querySelector('.moveBox').style.display = 'block';
+        }
+    }
+    xhr.send();
+
+    let moving = false;
+    document.getElementById('moveBtn').onmousedown = function(ev){
+        moving = ev.pageX;
+    }
+    document.getElementById('moveBtn').onmousemove = function(ev){
+        if(moving !== false){
+            let x = ev.pageX - moving;
+            if(x >= 0 && x <= 284){
+                this.style.left = x + 'px';
+                angle = x / 284 * 360;
+                document.querySelector('.moveBox').style.transform = "rotate("+ angle +"deg)";
+            }
+        }
+    }
+    document.getElementById('moveBtn').onmouseup = function(){
+        moving = false;
+        //提交角度验证码数据和后端生成的角度做比对
+        console.log(angle);
+    }
+</script>
+</html>

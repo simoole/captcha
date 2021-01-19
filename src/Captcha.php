@@ -76,13 +76,11 @@ class Captcha
         //创建一张透明图片
         $sub_im = imagecreatetruecolor($radius * 2, $radius * 2);
         $mask_im = imagecreatetruecolor($radius * 2, $radius * 2);
-        imagesavealpha($sub_im, true);
         imagesavealpha($mask_im, true);
-        $bg = imagecolorallocatealpha($sub_im, 255, 255, 255, 127);
-        imagefill($sub_im, 0, 0, $bg);
-        $_bg = imagecolorallocatealpha($mask_im, 255, 255, 255, 127);
-        imagefill($mask_im, 0, 0, $_bg);
+        $bg = imagecolorallocatealpha($mask_im, 255, 255, 255, 127);
+        imagefill($mask_im, 0, 0, $bg);
         $black = imagecolorallocate($mask_im, 0, 0, 0);
+
         //在透明图片上绘制圆形图像
         for ($x = 0; $x < $radius * 2; $x++) {
             for ($y = 0; $y < $radius * 2; $y++) {
@@ -95,29 +93,35 @@ class Captcha
         }
         //将黑色遮罩覆盖在原图上
         imagecopy($master_im, $mask_im, $position[0] - $radius, $position[1] - $radius, 0, 0, $radius * 2, $radius * 2);
+
         //将圆形图旋转任意角度
         $this->angle = rand(0, 36000) / 100;
-        $sub_im = imagerotate($sub_im, $this->angle, $bg);
+        $sub_im = imagerotate($sub_im, $this->angle, 0);
+        $x = imagesx($sub_im) / 2 - $radius;
+        $sub_im = imagecrop($sub_im, [
+            'x' => $x,
+            'y' => $x,
+            'width' => $radius * 2,
+            'height' => $radius * 2
+        ]);
 
         ob_start();
         //写入时间戳
         echo pack('I', time());
-        //写入分隔符
-        echo pack('C', ord('|'));
         //写入X坐标
-        echo pack('n', $position[0]);
-        //写入分隔符
-        echo pack('C', ord('|'));
+        echo pack('v', $position[0]);
         //写入Y坐标
-        echo pack('n', $position[1]);
-        //写入分隔符
-        echo pack('C', ord('|'));
+        echo pack('v', $position[1]);
         //写入主图
         imagejpeg($master_im);
-        //写入32个0分隔
-        echo pack('H*', '00000000');
+        $size1 = ob_get_length() - 8;
         //写入分图
-        imagepng($sub_im);
+        imagejpeg($sub_im);
+        $size2 = ob_get_length() - $size1 - 8;
+        //写入主图大小
+        echo pack('I', $size1);
+        //写入分图大小
+        echo pack('I', $size2);
         //输出缓冲区
         return ob_get_clean();
     }
