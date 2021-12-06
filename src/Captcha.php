@@ -10,11 +10,11 @@ class Captcha
     private $height = 300;
     private $angle = 0;
 
-    public function __construct(array $option = [], ?string $dir_path = null)
+    public function __construct(array $option = [])
     {
         if(isset($option['width']))$this->width = $option['width'];
         if(isset($option['height']))$this->height = $option['height'];
-        if(!empty($dir_path))$this->dir_path = $dir_path;
+        if(isset($option['dir_path']))$this->dir_path = $option['dir_path'];
     }
 
     public function create(): string
